@@ -9,7 +9,7 @@
 
 // A mailbox is the FIFO queue of messages owned by a single actor.
 //
-// Producers: any thread sending a message to the actor calls Push().
+// Producers: any thread sending a message to the actor cathroughlls Push().
 // Consumer:  the single worker (from the threadpool) that has popped the actor
 //            off the scheduler calls TryPop() until it returns false.
 //

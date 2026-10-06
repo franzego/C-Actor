@@ -14,15 +14,19 @@ FetchContent_MakeAvailable(googletest)
 
 find_package(Threads REQUIRED)
 
-enable_testing()
-
-add_executable(actor_tests
-  tests/unit_tests.cpp
+set(ACTOR_SOURCES
   src/mailbox.cpp
   src/actor.cpp
   src/thread_pool.cpp
   src/schedular.cpp
   src/actorsystem.cpp
+)
+
+enable_testing()
+
+add_executable(actor_tests
+  tests/unit_tests.cpp
+  ${ACTOR_SOURCES}
 )
 
 target_include_directories(actor_tests PRIVATE src)
@@ -31,3 +35,21 @@ target_compile_options(actor_tests PRIVATE -Wall -Wextra)
 
 include(GoogleTest)
 gtest_discover_tests(actor_tests)
+
+add_executable(actor_bench
+  bench/throughput.cpp
+  ${ACTOR_SOURCES}
+)
+
+target_include_directories(actor_bench PRIVATE src)
+target_link_libraries(actor_bench PRIVATE Threads::Threads)
+target_compile_options(actor_bench PRIVATE -Wall -Wextra -O2)
+
+add_executable(actor_latency
+  bench/latency.cpp
+  ${ACTOR_SOURCES}
+)
+
+target_include_directories(actor_latency PRIVATE src)
+target_link_libraries(actor_latency PRIVATE Threads::Threads)
+target_compile_options(actor_latency PRIVATE -Wall -Wextra -O2)

@@ -1,4 +1,4 @@
-#include "/actorsystem.hpp"
+#include "actorsystem.hpp"
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -43,8 +43,8 @@ double measure(std::size_t producers, std::size_t sinks,
 
   std::vector<std::shared_ptr<Actor>> sink_actors;
   for (std::size_t s = 0; s < sinks; ++s) {
-    sink_actors.push_back(
-        system.spawn<Sink>("sink" + std::to_string(s), counter, total, done));
+    sink_actors.push_back(system.spawn<Sink>("sink" + std::to_string(s),
+                                             counter, total, done));
   }
 
   std::promise<void> start;

@@ -30,6 +30,7 @@ add_executable(actor_tests
 )
 
 target_include_directories(actor_tests PRIVATE src)
+target_include_directories(actor_tests SYSTEM PRIVATE third_party)
 target_link_libraries(actor_tests PRIVATE gtest gtest_main Threads::Threads)
 target_compile_options(actor_tests PRIVATE -Wall -Wextra)
 
@@ -42,6 +43,7 @@ add_executable(actor_bench
 )
 
 target_include_directories(actor_bench PRIVATE src)
+target_include_directories(actor_bench SYSTEM PRIVATE third_party)
 target_link_libraries(actor_bench PRIVATE Threads::Threads)
 target_compile_options(actor_bench PRIVATE -Wall -Wextra -O2)
 
@@ -51,5 +53,6 @@ add_executable(actor_latency
 )
 
 target_include_directories(actor_latency PRIVATE src)
+target_include_directories(actor_latency SYSTEM PRIVATE third_party)
 target_link_libraries(actor_latency PRIVATE Threads::Threads)
 target_compile_options(actor_latency PRIVATE -Wall -Wextra -O2)

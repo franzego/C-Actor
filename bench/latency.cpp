@@ -9,20 +9,15 @@
 #include <numeric>
 #include <vector>
 
-struct Ping : Message {
-  std::chrono::steady_clock::time_point t0;
-  explicit Ping(std::chrono::steady_clock::time_point t) : t0(t) {}
-};
-
-struct Start : Message {};
-
 class Ponger : public Actor {
 public:
   explicit Ponger(std::weak_ptr<Actor> pinger) : pinger_(std::move(pinger)) {}
 
-  void Receive(const std::shared_ptr<Message> &msg) override {
-    if (auto p = pinger_.lock()) {
-      p->Send(msg);
+  void Receive(const Message &msg) override {
+    if (std::holds_alternative<Ping>(msg)) {
+      if (auto p = pinger_.lock()) {
+        p->Send(msg);
+      }
     }
   }
 
@@ -41,20 +36,22 @@ public:
 
   const std::vector<std::uint64_t> &samples() const { return samples_; }
 
-  void Receive(const std::shared_ptr<Message> &msg) override {
+  void Receive(const Message &msg) override {
     auto now = std::chrono::steady_clock::now();
 
-    if (dynamic_cast<Start *>(msg.get())) {
-      ponger_->Send(std::make_shared<Ping>(now));
+    if (std::holds_alternative<Start>(msg)) {
+      t0_ = now;
+      ponger_->Send(Ping{});
       return;
     }
 
-    if (auto *p = dynamic_cast<Ping *>(msg.get())) {
-      auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - p->t0)
+    if (std::holds_alternative<Ping>(msg)) {
+      auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0_)
                     .count();
       samples_.push_back(static_cast<std::uint64_t>(ns));
       if (samples_.size() < rounds_) {
-        ponger_->Send(std::make_shared<Ping>(now));
+        t0_ = now;
+        ponger_->Send(Ping{});
       } else {
         done_->set_value();
       }
@@ -65,6 +62,7 @@ private:
   std::shared_ptr<Actor> ponger_;
   std::uint64_t rounds_;
   std::shared_ptr<std::promise<void>> done_;
+  std::chrono::steady_clock::time_point t0_{};
   std::vector<std::uint64_t> samples_;
 };
 
@@ -78,7 +76,7 @@ std::vector<std::uint64_t> pingpong(std::uint64_t rounds) {
   auto ponger = system.spawn<Ponger>("ponger", pinger);
   pinger->SetPonger(ponger);
 
-  pinger->Send(std::make_shared<Start>());
+  pinger->Send(Start{});
   done_fut.wait();
 
   return pinger->samples();
@@ -104,8 +102,7 @@ int main() {
               << std::setprecision(3) << us << " us\n";
   };
 
-  std::cout << "round-trip latency (ns source): " << samples.size()
-            << " samples\n";
+  std::cout << "round-trip latency: " << samples.size() << " samples\n";
   line("min", samples.front() / 1000.0);
   line("avg", avg);
   line("p50", pct(samples, 0.50));

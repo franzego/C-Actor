@@ -10,8 +10,6 @@
 #include <thread>
 #include <vector>
 
-struct Ping : Message {};
-
 // Counts messages; on the `target`-th one, fires the completion promise.
 class Sink : public Actor {
 public:
@@ -19,9 +17,11 @@ public:
        std::uint64_t target, std::shared_ptr<std::promise<void>> done)
       : counter_(std::move(counter)), target_(target), done_(std::move(done)) {}
 
-  void Receive(const std::shared_ptr<Message> &) override {
-    if (counter_->fetch_add(1, std::memory_order_relaxed) + 1 == target_) {
-      done_->set_value();
+  void Receive(const Message &msg) override {
+    if (std::holds_alternative<Ping>(msg)) {
+      if (counter_->fetch_add(1, std::memory_order_relaxed) + 1 == target_) {
+        done_->set_value();
+      }
     }
   }
 
@@ -56,7 +56,7 @@ double measure(std::size_t producers, std::size_t sinks,
       auto sink = sink_actors[p % sinks];
       go.wait();
       for (std::uint64_t i = 0; i < per_producer; ++i) {
-        sink->Send(std::make_shared<Ping>());
+        sink->Send(Ping{});
       }
     });
   }

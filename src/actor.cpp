@@ -1,11 +1,11 @@
 #include "actor.hpp"
 
-void Actor::Send(std::shared_ptr<Message> msg) {
+void Actor::Send(Message msg) {
   mailbox_.Push(std::move(msg));
 }
 
 void Actor::Run() {
-  std::shared_ptr<Message> msg;
+  Message msg;
   while (mailbox_.TryPop(msg)) {
     Receive(msg);
   }

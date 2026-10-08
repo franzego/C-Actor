@@ -4,7 +4,7 @@ void Mailbox::SetScheduleCallback(std::function<void()> cb) {
   schedule_ = std::move(cb);
 }
 
-void Mailbox::Push(std::shared_ptr<Message> msg) {
+void Mailbox::Push(Message msg) {
   queue_.enqueue(std::move(msg));
 
   // Only the empty -> non-empty transition triggers a schedule.
@@ -17,7 +17,7 @@ void Mailbox::Push(std::shared_ptr<Message> msg) {
   }
 }
 
-bool Mailbox::TryPop(std::shared_ptr<Message> &msg) {
+bool Mailbox::TryPop(Message &msg) {
   if (queue_.try_dequeue(msg)) {
     count_.fetch_sub(1);
     return true;

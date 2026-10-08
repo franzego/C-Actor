@@ -1,0 +1,5 @@
+CompileFlags:
+  Add:
+    - -std=c++17
+    - -I/home/franz/cppppp/practice/cpp-prac/actor/src
+    - -isystem/home/franz/cppppp/practice/cpp-prac/actor/third_party

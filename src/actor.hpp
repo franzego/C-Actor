@@ -3,7 +3,6 @@
 
 #include "mailbox.hpp"
 #include <functional>
-#include <memory>
 
 // An actor is the unit of work. It holds a mailbox; other actors (or external
 // code) send it messages via Send(). When the scheduler runs the actor, Run()
@@ -12,13 +11,11 @@ class Actor {
 public:
   virtual ~Actor() = default;
 
-  // Concrete message handling: It receives a message from another actor or even
-  // a client.
-  virtual void Receive(const std::shared_ptr<Message> &msg) = 0;
+  // Concrete message handling: the subclass std::visits the variant.
+  virtual void Receive(const Message &msg) = 0;
 
-  // Producer side. Any thread may call this to deliver a message to another
-  // actor.
-  void Send(std::shared_ptr<Message> msg);
+  // Producer side. Any thread may call this to deliver a message.
+  void Send(Message msg);
 
   // Consumer side. Called by a worker thread after the actor is popped off
   // the scheduler. Drains the mailbox in FIFO order.

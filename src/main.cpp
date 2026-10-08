@@ -6,24 +6,21 @@
 #include <string>
 #include <thread>
 
-std::mutex mu;
+std::mutex io;
 template <typename... Args> void log(Args &&...args) {
-  std::lock_guard<std::mutex> lock(mu);
+  std::lock_guard<std::mutex> lock(io);
   (std::cout << ... << args);
   std::cout << "\n";
 }
 
-struct Greet : Message {
-  std::string name;
-  explicit Greet(std::string s) : name(std::move(s)) {}
-};
-
 class Printer : public Actor {
 public:
-  void Receive(const std::shared_ptr<Message> &msg) override {
-    if (auto *g = dynamic_cast<Greet *>(msg.get())) {
-      log("[printer] hello ", g->name, "!");
-    }
+  void Receive(const Message &msg) override {
+    std::visit(overloaded{
+                   [](const Greet &g) { log("[printer] hello ", g.name, "!"); },
+                   [](const auto &) {},
+               },
+               msg);
   }
 };
 
@@ -32,9 +29,9 @@ public:
   explicit Greeter(std::shared_ptr<Actor> printer)
       : printer_(std::move(printer)) {}
 
-  void Receive(const std::shared_ptr<Message> &msg) override {
-    if (auto *g = dynamic_cast<Greet *>(msg.get())) {
-      log("[greeter] got Greet(", g->name, "), forwarding...");
+  void Receive(const Message &msg) override {
+    if (std::holds_alternative<Greet>(msg)) {
+      log("[greeter] got Greet, forwarding...");
       printer_->Send(msg);
     }
   }
@@ -50,8 +47,8 @@ int main() {
     auto printer = system.spawn<Printer>("printer");
     system.spawn<Greeter>("greeter", printer);
 
-    system.get("greeter")->Send(std::make_shared<Greet>("Alice"));
-    system.get("greeter")->Send(std::make_shared<Greet>("Bob"));
+    system.get("greeter")->Send(Greet{"Alice"});
+    system.get("greeter")->Send(Greet{"Bob"});
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }

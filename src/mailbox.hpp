@@ -1,8 +1,8 @@
 #ifndef MAILBOX_HPP
 #define MAILBOX_HPP
 
-#include "message.hpp"
 #include "concurrentqueue.h"
+#include "message.hpp"
 #include <atomic>
 #include <cstdint>
 #include <functional>
@@ -34,7 +34,7 @@ public:
 
 private:
   moodycamel::ConcurrentQueue<Message> queue_;
-  std::atomic<std::uint64_t> count_{0};
+  std::atomic<std::uint64_t> offset_{0};
   std::atomic<bool> scheduled_{false};
   std::function<void()> schedule_;
 };
